@@ -10,7 +10,7 @@ Window {
     property real centerX: width / 2
     property real centerY: height / 2
     property real requiredDistance: 100
-    property list<var> points: []
+    property list<real> points: []
     property list<var> lines: []
 
     MouseArea {
@@ -42,13 +42,11 @@ Window {
 
         onPressed: {
             if (phantomPoint.visible) {
+                let angle = Math.atan2(phantomPoint.posY - circle.r, phantomPoint.posX - circle.r)
                 for (let i = 0; i < core.points.length; i++) {
-                    // let a = (dotPhantom.posY - core.dots[i]['posY']) / (dotPhantom.posX - core.dots[i]['posX'])
-                    // let b = core.dots[i]['posY'] - core.dots[i]['posX'] * a
-                    // core.lines.push((x) => a * x + b)
-                    core.lines.push({'ax': core.points[i]['posX'], 'ay': core.points[i]['posY'], 'bx': phantomPoint.posX, 'by': phantomPoint.posY})
+                    core.lines.push([points[i], angle])
                 }
-                core.points.push({'posX': phantomPoint.posX, 'posY': phantomPoint.posY})
+                core.points.push(angle)
             }
         }
     }
@@ -82,11 +80,10 @@ Window {
             model: core.points
 
             Rectangle {
-                id: dot
                 property real r: 8
                 required property var modelData
-                property real posX: modelData['posX']
-                property real posY: modelData['posY']
+                property real posX: Math.cos(modelData) * circle.r + circle.r
+                property real posY: Math.sin(modelData) * circle.r + circle.r
                 z: 1
                 width: r * 2
                 height: r * 2
@@ -106,15 +103,15 @@ Window {
                 antialiasing: true
 
                 ShapePath {
-                    startX: modelData['ax']
-                    startY: modelData['ay']
+                    startX: Math.cos(modelData[0]) * circle.r + circle.r
+                    startY: Math.sin(modelData[0]) * circle.r + circle.r
                     fillColor: 'transparent'
                     strokeColor: '#aaa'
                     strokeWidth: 1
 
                     PathLine {
-                        x: modelData['bx']
-                        y: modelData['by']
+                        x: Math.cos(modelData[1]) * circle.r + circle.r
+                        y: Math.sin(modelData[1]) * circle.r + circle.r
                     }
                 }
             }
