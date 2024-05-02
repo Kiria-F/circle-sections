@@ -10,7 +10,7 @@ Window {
     property real centerX: width / 2
     property real centerY: height / 2
     property real requiredDistance: 100
-    property list<var> dots: []
+    property list<var> points: []
     property list<var> lines: []
 
     MouseArea {
@@ -26,23 +26,29 @@ Window {
 
         function update(event) {
             if (event === undefined) {
-                dotPhantom.visible = false
+                phantomPoint.visible = false
                 return
             }
             let distanceFromCenter = Math.sqrt((event.x - core.centerX) ** 2 + (event.y - core.centerY) ** 2)
             if (Math.abs(distanceFromCenter - circle.r) < core.requiredDistance) {
-                dotPhantom.visible = true
+                phantomPoint.visible = true
                 let angle = Math.atan2(event.y - core.centerY, event.x - core.centerX);
-                dotPhantom.posX = circle.r + Math.cos(angle) * (circle.r - circleBorder.border.width / 2)
-                dotPhantom.posY = circle.r + Math.sin(angle) * (circle.r - circleBorder.border.width / 2)
+                phantomPoint.posX = circle.r + Math.cos(angle) * (circle.r - circleBorder.border.width / 2)
+                phantomPoint.posY = circle.r + Math.sin(angle) * (circle.r - circleBorder.border.width / 2)
             } else {
-                dotPhantom.visible = false
+                phantomPoint.visible = false
             }
         }
 
         onPressed: {
-            if (dotPhantom.visible) {
-                core.dots.push({'posX': dotPhantom.posX, 'posY': dotPhantom.posY})
+            if (phantomPoint.visible) {
+                for (let i = 0; i < core.points.length; i++) {
+                    // let a = (dotPhantom.posY - core.dots[i]['posY']) / (dotPhantom.posX - core.dots[i]['posX'])
+                    // let b = core.dots[i]['posY'] - core.dots[i]['posX'] * a
+                    // core.lines.push((x) => a * x + b)
+                    core.lines.push({'ax': core.points[i]['posX'], 'ay': core.points[i]['posY'], 'bx': phantomPoint.posX, 'by': phantomPoint.posY})
+                }
+                core.points.push({'posX': phantomPoint.posX, 'posY': phantomPoint.posY})
             }
         }
     }
@@ -55,7 +61,7 @@ Window {
         height: r * 2
 
         Rectangle {
-            id: dotPhantom
+            id: phantomPoint
             z: 1
             property real r: 8
             property real posX: 0
@@ -73,7 +79,7 @@ Window {
         }
 
         Repeater {
-            model: core.dots
+            model: core.points
 
             Rectangle {
                 id: dot
@@ -92,11 +98,24 @@ Window {
             }
         }
 
-        Shape {
-            Repeater {
-                model: core.lines
-                PathLine {
+        Repeater {
+            model: core.lines
 
+            Shape {
+                required property var modelData
+                antialiasing: true
+
+                ShapePath {
+                    startX: modelData['ax']
+                    startY: modelData['ay']
+                    fillColor: 'transparent'
+                    strokeColor: '#aaa'
+                    strokeWidth: 1
+
+                    PathLine {
+                        x: modelData['bx']
+                        y: modelData['by']
+                    }
                 }
             }
         }
